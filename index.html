@@ -107,10 +107,6 @@ a.nw-i:active{opacity:.6}
 
 /* barra inferior */
 #bar{grid-column:1/-1;display:flex;gap:10px;align-items:center}
-#mic{border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:999px;padding:12px 18px;font-size:1rem;display:flex;align-items:center;gap:10px;cursor:pointer;white-space:nowrap}
-#mic .dot{width:12px;height:12px;border-radius:50%;background:var(--mut)}
-#mic.on .dot{background:var(--ok);box-shadow:0 0 0 0 rgba(107,230,160,.6);animation:pulse 2s infinite}
-#mic.arm .dot{background:var(--warn);animation:none}
 @keyframes pulse{70%{box-shadow:0 0 0 10px rgba(107,230,160,0)}100%{box-shadow:0 0 0 0 rgba(107,230,160,0)}}
 #q{flex:1;border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:999px;padding:13px 18px;font-size:1rem;outline:none;min-width:0}
 #q:focus{border-color:var(--acc)}
@@ -177,8 +173,7 @@ a.nw-i:active{opacity:.6}
 
   <!-- barra -->
   <div id="bar">
-    <button id="mic" title="Ativar ou desativar a escuta por voz"><span class="dot"></span><span id="miclbl">Voz desligada</span></button>
-    <input id="q" type="text" placeholder="Digite uma pergunta ou diga a palavra de ativação…" autocomplete="off">
+    <input id="q" type="text" placeholder="Pergunte algo ao Gemini sobre sua agenda, e-mails, clima ou notícias…" autocomplete="off">
     <button class="btn pri" id="send">Enviar</button>
     <button class="btn" id="btnMail" title="E-mails não lidos">✉ <span class="badge" id="mailn">–</span></button>
     <button class="btn" id="btnFull" title="Tela cheia">⛶</button>
@@ -205,8 +200,6 @@ a.nw-i:active{opacity:.6}
       <div><label>Seu nome (como o assistente te chama)</label><input type="text" id="f_nome"></div>
     </div>
 
-    <label>Palavras de ativação (separadas por vírgula)</label>
-    <input type="text" id="f_wake" placeholder="gemini, jemini">
 
     <div class="row">
       <div><label>Cidade</label><input type="text" id="f_cidade"></div>
@@ -215,7 +208,6 @@ a.nw-i:active{opacity:.6}
     </div>
     <div class="acts" style="justify-content:flex-start;margin-top:8px"><button class="btn" id="btnGeo">Usar localização do tablet</button></div>
 
-    <label class="chk"><input type="checkbox" id="f_voz"> Assistente responde falando</label>
     <label class="chk"><input type="checkbox" id="f_noite"> Escurecer a tela entre 23h e 6h</label>
 
     <div class="acts">
@@ -237,8 +229,8 @@ const norm = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerC
 
 let cfg = Object.assign({
   clientId:'', geminiKey:'', model:'gemini-3.5-flash', nome:'Lucas',
-  wake:'gemini, jemini', cidade:'Belém', lat:-1.4558, lon:-48.4902,
-  voz:true, noite:true
+  cidade:'Belém', lat:-1.4558, lon:-48.4902,
+  noite:true
 }, store.get('cfg', {}));
 
 /* ============ relógio ============ */
@@ -510,7 +502,7 @@ function showNews(i, instant){
 function nextNews(){ showNews((curNews+1) % NEWS.length); }
 
 /* ============ assistente (Gemini) ============ */
-let hist = [], speaking = false, wantListen = false, rec = null, armedUntil = 0, popT = null;
+let hist = [], popT = null;
 
 function addMsg(cls, txt, quiet){
   const d = document.createElement('div'); d.className = 'msg '+cls; d.textContent = txt;
@@ -541,7 +533,7 @@ function contexto(){
 }
 async function perguntar(q){
   if(!cfg.geminiKey){ return 'Falta a chave do Gemini. Abra as configurações e cole a chave de API.'; }
-  const sys = 'Você é o assistente pessoal de '+cfg.nome+', rodando em um painel de tablet. Responda sempre em português do Brasil, de forma natural e curta (até 3 frases), pensada para ser falada em voz alta, sem markdown, sem listas e sem emojis. Use o contexto abaixo quando a pergunta envolver agenda, clima, e-mails, notícias ou cotações; se a informação não estiver no contexto, diga que não tem acesso a ela. Você apenas lê a agenda e os e-mails; não consegue criar nem alterar nada.\n\nCONTEXTO\n'+contexto();
+  const sys = 'Você é o assistente pessoal de '+cfg.nome+', rodando em um painel de tablet. Responda sempre em português do Brasil, de forma natural e curta (até 3 frases), pensada para leitura rápida na tela, sem markdown, sem listas e sem emojis. Use o contexto abaixo quando a pergunta envolver agenda, clima, e-mails, notícias ou cotações; se a informação não estiver no contexto, diga que não tem acesso a ela. Você apenas lê a agenda e os e-mails; não consegue criar nem alterar nada.\n\nCONTEXTO\n'+contexto();
   hist.push({ role:'user', parts:[{text:q}] });
   hist = hist.slice(-8);
   const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(cfg.model)+':generateContent', {
@@ -557,68 +549,10 @@ async function perguntar(q){
 async function ask(q){
   q = (q||'').trim(); if(!q) return;
   addMsg('eu', q);
-  setMic('pensando…', 'arm');
   let resp;
   try{ resp = await perguntar(q); }catch(e){ resp = 'Erro ao falar com o Gemini: '+e.message; hist.pop(); }
   addMsg('ia', resp);
-  speak(resp);
-  if(!speaking) setMic(wantListen ? 'Ouvindo' : 'Voz desligada', wantListen ? 'on' : '');
 }
-function speak(text){
-  if(!cfg.voz || !('speechSynthesis' in window)) return;
-  const clean = text.replace(/[*_#`>]/g,'').replace(/\s+/g,' ');
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(clean); u.lang = 'pt-BR';
-  const v = speechSynthesis.getVoices().find(x => /pt[-_]BR/i.test(x.lang)); if(v) u.voice = v;
-  speaking = true;
-  if(rec){ try{ rec.abort(); }catch{} }
-  const fim = () => { speaking = false; if(wantListen) startVoice(); else setMic('Voz desligada',''); };
-  u.onend = fim; u.onerror = fim;
-  speechSynthesis.speak(u);
-}
-
-/* ---- escuta contínua com palavra de ativação ---- */
-function setMic(txt, cls){ $('#miclbl').textContent = txt; const m = $('#mic'); m.className = cls || ''; }
-function handleHeard(txt){
-  const n = norm(txt);
-  if(Date.now() < armedUntil){ armedUntil = 0; ask(txt); return; }
-  const wakes = cfg.wake.split(',').map(norm).map(s => s.trim()).filter(Boolean).map(w => w.replace(/[.*+?^$}()|[\]\\]/g,'\\$&'));
-  if(!wakes.length) return;
-  // ativa com "gemini" ou com saudação + "gemini" no início da frase (ex.: "oi gemini", "bom dia gemini")
-  const re = new RegExp('^[\\s,.!?-]*(?:(?:oi|oie|ola|ei|eai|e ai|hey|opa|fala|alo|bom dia|boa tarde|boa noite)[\\s,.!?-]+)?(?:'+wakes.concat(wakes.includes('gemini') ? ['[gj]e+m+[iey]+n+[iaey]*'] : []).join('|')+')(?![a-z0-9])');
-  const m = re.exec(n);
-  if(!m) return;
-  const rest = txt.slice(m[0].length).replace(/^[\s,.:;!?\-–]+/, '');
-  if(rest.length < 3){ armedUntil = Date.now() + 8000; setMic('Pode falar…', 'arm'); setTimeout(() => { if(Date.now() >= armedUntil && wantListen && !speaking) setMic('Ouvindo','on'); }, 8200); return; }
-  ask(rest);
-}
-let flashT = null;
-function flashHeard(t, isErr){
-  $('#miclbl').textContent = (isErr ? 'Mic ' : 'Ouvi: ')+t.slice(0,30);
-  clearTimeout(flashT);
-  flashT = setTimeout(() => { if(!speaking && Date.now() >= armedUntil) setMic(wantListen ? 'Ouvindo' : 'Voz desligada', wantListen ? 'on' : ''); }, 5000);
-}
-function startVoice(){
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR){ addMsg('sis','Este navegador não tem reconhecimento de voz. Use o Chrome.'); return; }
-  wantListen = true; store.set('voz_on', true);
-  if(rec) return;
-  rec = new SR(); rec.lang = 'pt-BR'; rec.continuous = true; rec.interimResults = false;
-  rec.onresult = e => { for(let i = e.resultIndex; i < e.results.length; i++){ if(e.results[i].isFinal){ const tr = e.results[i][0].transcript.trim(); flashHeard(tr); handleHeard(tr); } } };
-  rec.onerror = e => {
-    if(e.error !== 'no-speech' && e.error !== 'aborted') flashHeard('erro: '+e.error, true);
-    if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){ wantListen = false; store.set('voz_on', false); setMic('Microfone bloqueado',''); addMsg('sis','Permita o microfone nas configurações do site.'); }
-  };
-  rec.onend = () => { rec = null; if(wantListen && !speaking) setTimeout(startVoice, 500); };
-  try{ rec.start(); setMic('Ouvindo','on'); }catch{ rec = null; }
-}
-function stopVoice(){
-  wantListen = false; store.set('voz_on', false);
-  if(rec){ try{ rec.abort(); }catch{} rec = null; }
-  speechSynthesis.cancel(); speaking = false;
-  setMic('Voz desligada','');
-}
-
 /* ============ tela sempre ligada / tela cheia ============ */
 let wl = null;
 async function keepAwake(){ try{ if('wakeLock' in navigator) wl = await navigator.wakeLock.request('screen'); }catch{} }
@@ -632,8 +566,8 @@ function toggleFull(){
 /* ============ configurações ============ */
 function openCfg(){
   $('#f_client').value = cfg.clientId; $('#f_key').value = cfg.geminiKey; $('#f_model').value = cfg.model; $('#f_nome').value = cfg.nome;
-  $('#f_wake').value = cfg.wake; $('#f_cidade').value = cfg.cidade; $('#f_lat').value = cfg.lat; $('#f_lon').value = cfg.lon;
-  $('#f_voz').checked = !!cfg.voz; $('#f_noite').checked = !!cfg.noite;
+  $('#f_cidade').value = cfg.cidade; $('#f_lat').value = cfg.lat; $('#f_lon').value = cfg.lon;
+  $('#f_noite').checked = !!cfg.noite;
   $('#cfgwrap').classList.add('on');
 }
 function closeCfg(){ $('#cfgwrap').classList.remove('on'); }
@@ -641,9 +575,9 @@ function saveCfg(){
   const num = (v, d) => { const n = parseFloat(String(v).replace(',','.')); return isNaN(n) ? d : n; };
   cfg = {
     clientId: $('#f_client').value.trim(), geminiKey: $('#f_key').value.trim(), model: $('#f_model').value.trim() || 'gemini-3.5-flash',
-    nome: $('#f_nome').value.trim() || 'Lucas', wake: $('#f_wake').value.trim() || 'gemini',
+    nome: $('#f_nome').value.trim() || 'Lucas',
     cidade: $('#f_cidade').value.trim(), lat: num($('#f_lat').value, -1.4558), lon: num($('#f_lon').value, -48.4902),
-    voz: $('#f_voz').checked, noite: $('#f_noite').checked
+    noite: $('#f_noite').checked
   };
   store.set('cfg', cfg); closeCfg(); tick(); loadWeather(); loadGIS();
 }
@@ -658,7 +592,6 @@ $('#btnGeo').onclick = () => {
   if(!navigator.geolocation) return;
   navigator.geolocation.getCurrentPosition(p => { $('#f_lat').value = p.coords.latitude.toFixed(4); $('#f_lon').value = p.coords.longitude.toFixed(4); }, () => {});
 };
-$('#mic').onclick = () => { keepAwake(); wantListen ? stopVoice() : startVoice(); };
 $('#send').onclick = () => { const v = $('#q').value; $('#q').value = ''; ask(v); };
 $('#q').addEventListener('keydown', e => { if(e.key === 'Enter') $('#send').click(); });
 $('#btnMail').onclick = () => $('#mailpop').classList.toggle('on');
@@ -681,7 +614,6 @@ $('#days').addEventListener('click', e => {
 });
 
 /* ============ inicialização ============ */
-addMsg('sis', 'Diga "'+(cfg.wake.split(',')[0].trim())+'" seguido da pergunta, ou digite abaixo.', true);
 renderCal();
 loadWeather(); setInterval(loadWeather, 15*60000);
 NEWS.forEach(loadNews); loadFx(); showNews(0, true);
@@ -690,10 +622,8 @@ setInterval(nextNews, 20000);
 loadGIS();
 setInterval(() => { if(tok && tok.exp > Date.now()) refreshGoogle(); }, 5*60000);
 setInterval(() => { renderAgenda(); renderCal(); }, 30000);
-if('speechSynthesis' in window) speechSynthesis.getVoices();
 keepAwake();
 if(!cfg.clientId && !cfg.geminiKey) openCfg();
-if(store.get('voz_on', false)) setMic('Toque para ativar a voz','');   // o navegador exige um toque para liberar o microfone
 </script>
 </body>
 </html>
