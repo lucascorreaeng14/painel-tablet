@@ -15,10 +15,11 @@
 html,body{height:100%;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;-webkit-tap-highlight-color:transparent}
 body{transition:filter .6s}
 body.noite{filter:brightness(.45)}
-#app{height:100%;display:grid;grid-template-columns:1fr 1.25fr 1fr;grid-template-rows:1fr auto;gap:12px;padding:12px}
-@media (max-aspect-ratio:1/1){#app{grid-template-columns:1fr;grid-template-rows:auto auto auto auto;overflow-y:auto}html,body{overflow:auto}}
-.col{display:flex;flex-direction:column;gap:12px;min-height:0}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px;min-height:0}
+#app{height:100%;display:grid;grid-template-columns:1fr 1.45fr 1fr;grid-template-rows:minmax(0,1fr) auto;gap:12px;padding:12px}
+@media (max-aspect-ratio:1/1){#app{grid-template-columns:1fr;grid-template-rows:auto;overflow-y:auto}html,body{overflow:auto}#cal{min-height:70vh}.col{min-height:auto}}
+.col{display:flex;flex-direction:column;gap:12px;min-height:0;min-width:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px;min-height:0;min-width:0}
+.card.grow{flex:1 1 0;display:flex;flex-direction:column}
 .card h2{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);font-weight:600;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
 .scroll{overflow-y:auto;min-height:0;flex:1;scrollbar-width:none}
 .scroll::-webkit-scrollbar{display:none}
@@ -26,7 +27,7 @@ body.noite{filter:brightness(.45)}
 /* relógio */
 #clock{font-size:clamp(3.6rem,9vw,7.5rem);font-weight:200;line-height:1;letter-spacing:-.02em}
 #date{color:var(--mut);font-size:clamp(1rem,1.9vw,1.4rem);margin-top:6px}
-#date::first-letter,.dia h3::first-letter{text-transform:uppercase}
+#date::first-letter,.dia h3::first-letter,#calTitle::first-letter{text-transform:uppercase}
 
 /* clima */
 .wx-now{display:flex;align-items:center;gap:14px}
@@ -42,26 +43,60 @@ body.noite{filter:brightness(.45)}
 .wx-d{display:grid;grid-template-columns:3.2rem 1.6rem 1fr auto;align-items:center;gap:8px;font-size:.92rem}
 .wx-d span:last-child{color:var(--mut)}
 
+/* calendário */
+.calhead{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+#calTitle{flex:1;font-size:1.35rem;font-weight:500;text-align:center}
+.btn.sm{padding:6px 14px;font-size:.95rem}
+.wk{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-bottom:4px}
+.wk span{text-align:center;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+#cal{flex:1;display:flex;flex-direction:column;min-height:0}
+.days{flex:1;min-height:0;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr));gap:4px}
+.d{background:var(--card2);border-radius:10px;padding:5px 6px;overflow:hidden;cursor:pointer;border:1px solid transparent;display:flex;flex-direction:column;gap:3px;min-width:0;min-height:0}
+.d.out{opacity:.38}
+.d.hoje{border-color:var(--acc);background:#16303f}
+.d.sel{border-color:var(--warn)}
+.d .n{font-size:.95rem;font-weight:600}
+.d.hoje .n{color:var(--acc)}
+.chip{font-size:.7rem;line-height:1.2;padding:1px 4px;border-left:3px solid var(--acc);background:rgba(255,255,255,.07);border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mais{font-size:.68rem;color:var(--mut)}
+
 /* agenda */
-.dia{margin-bottom:14px}
+.dia{margin-bottom:12px}
 .dia h3{font-size:.9rem;color:var(--acc);font-weight:600;margin-bottom:6px}
-.ev{display:grid;grid-template-columns:4.4rem 1fr;gap:10px;padding:9px 11px;border-radius:12px;background:var(--card2);margin-bottom:6px;border-left:4px solid var(--acc)}
+.ev{display:grid;grid-template-columns:4.2rem 1fr;gap:10px;padding:8px 10px;border-radius:12px;background:var(--card2);margin-bottom:6px;border-left:4px solid var(--acc)}
 .ev .h{color:var(--mut);font-size:.9rem;font-variant-numeric:tabular-nums}
-.ev .t{font-size:1.05rem;line-height:1.25}
-.ev .l{color:var(--mut);font-size:.82rem;margin-top:2px}
+.ev .t{font-size:1rem;line-height:1.25}
+.ev .l{color:var(--mut);font-size:.8rem;margin-top:2px}
 .ev.passou{opacity:.4}
 .ev.agora{background:#1b3446;border-left-color:var(--ok)}
 .ev.prox{border-left-color:var(--warn)}
 .vazio{color:var(--mut);padding:10px 2px}
 
-/* e-mail */
+/* notícias */
+#newscard{cursor:pointer}
+.dots span{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--line);margin-left:5px}
+.dots span.on{background:var(--acc)}
+#news{transition:opacity .35s}
+#news.fade{opacity:0}
+.nw{display:flex;flex-direction:column;gap:9px}
+.nw-i .t{font-size:1rem;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.nw-i .m{color:var(--mut);font-size:.75rem;margin-top:2px}
+.fx{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.fx div{background:var(--card2);border-radius:10px;padding:6px 10px;font-size:.8rem;color:var(--mut)}
+.fx b{display:block;font-size:1rem;font-weight:600;color:var(--txt)}
+.up{color:var(--ok)}
+.dn{color:var(--bad)}
+
+/* e-mail e assistente (pop-ups) */
+.badge{background:var(--acc);color:#04202e;border-radius:999px;padding:1px 9px;font-size:.78rem;font-weight:700;letter-spacing:0}
 .mail{padding:8px 0;border-bottom:1px solid var(--line)}
 .mail:last-child{border:0}
 .mail .f{font-size:.82rem;color:var(--acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mail .s{font-size:.98rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.badge{background:var(--acc);color:#04202e;border-radius:999px;padding:1px 9px;font-size:.78rem;font-weight:700;letter-spacing:0}
-
-/* assistente */
+.pop{position:fixed;bottom:84px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;max-height:45vh;overflow-y:auto;display:none;z-index:8;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.pop.on{display:block}
+#chatpop{left:12px;width:min(640px,calc(100% - 24px))}
+#mailpop{right:12px;width:min(520px,calc(100% - 24px))}
 #chat{display:flex;flex-direction:column;gap:8px}
 .msg{padding:9px 12px;border-radius:14px;font-size:1rem;line-height:1.35;max-width:94%}
 .msg.eu{align-self:flex-end;background:#1b3446}
@@ -104,29 +139,37 @@ body.noite{filter:brightness(.45)}
       <div id="clock">--:--</div>
       <div id="date"></div>
     </div>
-    <div class="card" style="flex:1;display:flex;flex-direction:column">
+    <div class="card grow">
       <h2><span id="wxloc">Clima</span><span id="wxupd" style="text-transform:none;letter-spacing:0"></span></h2>
       <div class="scroll" id="wx"><div class="vazio">Carregando clima…</div></div>
     </div>
   </section>
 
-  <!-- coluna 2: agenda -->
+  <!-- coluna 2: calendário -->
   <section class="col">
-    <div class="card" style="flex:1;display:flex;flex-direction:column">
-      <h2><span>Agenda</span><span><span id="gst"></span> <button class="btn" id="btnG" style="padding:5px 12px;font-size:.8rem;display:none">Conectar Google</button></span></h2>
-      <div class="scroll" id="agenda"><div class="vazio">Conecte sua conta Google para ver a agenda.</div></div>
+    <div class="card grow">
+      <div class="calhead">
+        <button class="btn sm" id="calPrev" title="Mês anterior">‹</button>
+        <div id="calTitle"></div>
+        <button class="btn sm" id="calNext" title="Próximo mês">›</button>
+        <button class="btn sm" id="calHoje">Hoje</button>
+      </div>
+      <div id="cal">
+        <div class="wk"><span>dom</span><span>seg</span><span>ter</span><span>qua</span><span>qui</span><span>sex</span><span>sáb</span></div>
+        <div class="days" id="days"></div>
+      </div>
     </div>
   </section>
 
-  <!-- coluna 3: e-mails e assistente -->
+  <!-- coluna 3: agenda (metade de cima) e notícias (metade de baixo) -->
   <section class="col">
-    <div class="card" style="max-height:38%;display:flex;flex-direction:column">
-      <h2><span>E-mails não lidos</span><span class="badge" id="mailn" style="display:none"></span></h2>
-      <div class="scroll" id="mails"><div class="vazio">—</div></div>
+    <div class="card grow">
+      <h2><span id="agTitle">Próximos dias</span><span><span id="gst"></span> <button class="btn" id="btnG" style="padding:5px 12px;font-size:.8rem;display:none">Conectar Google</button></span></h2>
+      <div class="scroll" id="agenda"><div class="vazio">Conecte sua conta Google para ver a agenda.</div></div>
     </div>
-    <div class="card" style="flex:1;display:flex;flex-direction:column">
-      <h2><span>Assistente</span></h2>
-      <div class="scroll" id="chatscroll"><div id="chat"></div></div>
+    <div class="card grow" id="newscard">
+      <h2><span id="nwTitle">Notícias</span><span class="dots" id="nwDots"></span></h2>
+      <div class="scroll" id="news"><div class="vazio">Carregando notícias…</div></div>
     </div>
   </section>
 
@@ -135,15 +178,19 @@ body.noite{filter:brightness(.45)}
     <button id="mic" title="Ativar ou desativar a escuta por voz"><span class="dot"></span><span id="miclbl">Voz desligada</span></button>
     <input id="q" type="text" placeholder="Digite uma pergunta ou diga a palavra de ativação…" autocomplete="off">
     <button class="btn pri" id="send">Enviar</button>
+    <button class="btn" id="btnMail" title="E-mails não lidos">✉ <span class="badge" id="mailn">–</span></button>
     <button class="btn" id="btnFull" title="Tela cheia">⛶</button>
     <button class="btn" id="btnCfg" title="Configurações">⚙</button>
   </div>
 </div>
 
+<div class="pop" id="chatpop"><div id="chat"></div></div>
+<div class="pop" id="mailpop"><h2 style="font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:6px">E-mails não lidos</h2><div id="mails"><div class="vazio">—</div></div></div>
+
 <div id="cfgwrap">
   <div id="cfg">
     <h1>Configurações</h1>
-    <p class="n">Tudo fica salvo apenas neste tablet (armazenamento do navegador). Sem as chaves abaixo, o relógio e o clima funcionam, mas agenda, e-mail e assistente ficam desligados.</p>
+    <p class="n">Tudo fica salvo apenas neste tablet (armazenamento do navegador). Sem as chaves abaixo, o relógio, o clima e as notícias funcionam, mas agenda, e-mail e assistente ficam desligados.</p>
 
     <label>Google Client ID (OAuth, tipo "Aplicativo da Web")</label>
     <input type="text" id="f_client" placeholder="123456-abc.apps.googleusercontent.com">
@@ -295,14 +342,26 @@ async function gget(url){
   if(!r.ok) throw new Error(r.status);
   return r.json();
 }
+
+/* ---- calendário: mês exibido, dia selecionado e eventos ---- */
+const hoje0 = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); };
+let view = { y: new Date().getFullYear(), m: new Date().getMonth() };
+let selDay = null;
+function gridStart(){ const f = new Date(view.y, view.m, 1); return new Date(view.y, view.m, 1 - f.getDay()); }
+function eventsOn(d){
+  const a = new Date(d.getFullYear(), d.getMonth(), d.getDate()), b = new Date(d.getFullYear(), d.getMonth(), d.getDate()+1);
+  return events.filter(e => e.ini < b && (e.fim > a || (e.fim <= e.ini && e.ini >= a)))
+    .sort((x,y) => ((y.diaInteiro?1:0) - (x.diaInteiro?1:0)) || (x.ini - y.ini));
+}
 async function loadCalendar(){
-  const ini = new Date(); ini.setHours(0,0,0,0);
-  const fim = new Date(ini.getTime() + 7*86400000);
+  const gs = gridStart(), ge = new Date(gs.getFullYear(), gs.getMonth(), gs.getDate()+42);
+  const t0 = hoje0(), t1 = new Date(t0.getFullYear(), t0.getMonth(), t0.getDate()+15);
+  const ini = new Date(Math.min(gs.getTime(), t0.getTime())), fim = new Date(Math.max(ge.getTime(), t1.getTime()));
   const cals = await gget('https://www.googleapis.com/calendar/v3/users/me/calendarList?minAccessRole=reader');
   const sel = (cals.items||[]).filter(c => c.selected !== false);
   const all = await Promise.all(sel.map(async c => {
     try{
-      const j = await gget('https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(c.id)+'/events?singleEvents=true&orderBy=startTime&maxResults=40'+
+      const j = await gget('https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(c.id)+'/events?singleEvents=true&orderBy=startTime&maxResults=250'+
         '&timeMin='+encodeURIComponent(ini.toISOString())+'&timeMax='+encodeURIComponent(fim.toISOString()));
       return (j.items||[]).filter(e => e.status !== 'cancelled').map(e => ({
         id:e.id, titulo:e.summary||'(sem título)', local:e.location||'',
@@ -314,30 +373,44 @@ async function loadCalendar(){
     }catch{ return []; }
   }));
   events = all.flat().sort((a,b) => a.ini - b.ini);
-  renderAgenda();
+  renderCal(); renderAgenda();
 }
-function dayKey(d){ return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
 function dayLabel(d){
-  const hoje = new Date(); hoje.setHours(0,0,0,0);
-  const dd = new Date(d); dd.setHours(0,0,0,0);
+  const hoje = hoje0();
+  const dd = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const diff = Math.round((dd - hoje)/86400000);
   const base = d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'short'});
   return diff===0 ? 'Hoje · '+base : diff===1 ? 'Amanhã · '+base : base;
 }
+function renderCal(){
+  const first = new Date(view.y, view.m, 1), gs = gridStart(), h = hoje0();
+  $('#calTitle').textContent = first.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  let html = '';
+  for(let i=0;i<42;i++){
+    const d = new Date(gs.getFullYear(), gs.getMonth(), gs.getDate()+i);
+    const cls = 'd'+(d.getMonth()!==view.m?' out':'')+(d.getTime()===h.getTime()?' hoje':'')+(selDay && d.getTime()===selDay.getTime()?' sel':'');
+    const lista = eventsOn(d);
+    let chips = lista.slice(0,3).map(e => '<div class="chip" style="border-left-color:'+esc(e.cor)+'">'+esc(e.titulo)+'</div>').join('');
+    if(lista.length > 3) chips += '<div class="mais">+'+(lista.length-3)+' mais</div>';
+    html += '<div class="'+cls+'" data-t="'+d.getTime()+'"><span class="n">'+d.getDate()+'</span>'+chips+'</div>';
+  }
+  $('#days').innerHTML = html;
+}
 function renderAgenda(){
   const box = $('#agenda');
+  $('#agTitle').textContent = selDay ? dayLabel(selDay) : 'Próximos dias';
   if(!tok && !events.length){ return; }
-  if(!events.length){ box.innerHTML = '<div class="vazio">Nenhum compromisso nos próximos 7 dias.</div>'; return; }
-  const now = new Date(), grupos = {};
-  events.forEach(e => {
-    // eventos de vários dias aparecem no dia de início; ignora os que já terminaram antes de hoje
-    (grupos[dayKey(e.ini)] = grupos[dayKey(e.ini)] || []).push(e);
-  });
-  let proximo = events.find(e => !e.diaInteiro && e.ini > now);
-  let html = '';
-  Object.keys(grupos).forEach(k => {
-    const lista = grupos[k];
-    html += '<div class="dia"><h3>'+esc(dayLabel(lista[0].ini))+'</h3>';
+  const now = new Date();
+  let dias = [];
+  if(selDay) dias = [selDay];
+  else { const t = hoje0(); for(let i=0;i<14;i++) dias.push(new Date(t.getFullYear(), t.getMonth(), t.getDate()+i)); }
+  const proximo = events.find(e => !e.diaInteiro && e.ini > now);
+  let html = '', total = 0;
+  dias.forEach(d => {
+    const lista = eventsOn(d); if(!lista.length) return;
+    total += lista.length;
+    if(!selDay) html += '<div class="dia"><h3>'+esc(dayLabel(d))+'</h3>';
+    else html += '<div class="dia">';
     lista.forEach(e => {
       const agora = !e.diaInteiro && e.ini <= now && e.fim > now;
       const passou = !e.diaInteiro && e.fim <= now;
@@ -348,7 +421,7 @@ function renderAgenda(){
     });
     html += '</div>';
   });
-  box.innerHTML = html;
+  box.innerHTML = total ? html : '<div class="vazio">'+(selDay ? 'Nenhum compromisso neste dia.' : 'Nenhum compromisso nos próximos 14 dias.')+'</div>';
 }
 async function loadMail(){
   const lab = await gget('https://gmail.googleapis.com/gmail/v1/users/me/labels/INBOX');
@@ -365,9 +438,8 @@ async function loadMail(){
   renderMail();
 }
 function renderMail(){
-  const b = $('#mailn');
   if(mailTotal === null) return;
-  b.style.display = ''; b.textContent = mailTotal;
+  $('#mailn').textContent = mailTotal;
   $('#mails').innerHTML = mails.length ? mails.map(m => '<div class="mail"><div class="f">'+esc(m.de)+'</div><div class="s">'+esc(m.assunto)+'</div></div>').join('')
     : '<div class="vazio">Caixa de entrada em dia.</div>';
 }
@@ -376,33 +448,98 @@ async function refreshGoogle(){
   try{ await loadMail(); }catch(e){}
 }
 
-/* ============ assistente (Gemini) ============ */
-let hist = [], speaking = false, wantListen = false, rec = null, armedUntil = 0;
+/* ============ notícias (Google Notícias via rss2json) e cotações (AwesomeAPI) ============ */
+const GN = '?hl=pt-BR&gl=BR&ceid=BR:pt-419';
+const NEWS = [
+  { k:'brasil', t:'Brasil',     ico:'🇧🇷', rss:'https://news.google.com/rss/headlines/section/topic/NATION'+GN, items:[], err:false },
+  { k:'mundo',  t:'Mundo',      ico:'🌍', rss:'https://news.google.com/rss/headlines/section/topic/WORLD'+GN, items:[], err:false },
+  { k:'esp',    t:'Esportes',   ico:'⚽', rss:'https://news.google.com/rss/search?q='+encodeURIComponent('esportes brasil when:1d')+'&hl=pt-BR&gl=BR&ceid=BR:pt-419', items:[], err:false },
+  { k:'fin',    t:'Financeiro', ico:'💹', rss:'https://news.google.com/rss/headlines/section/topic/BUSINESS'+GN, items:[], err:false }
+];
+let fx = [], curNews = 0;
+function ago(d){
+  const m = Math.round((Date.now() - d.getTime())/60000);
+  if(isNaN(m)) return '';
+  if(m < 1) return 'agora';
+  if(m < 60) return 'há '+m+' min';
+  if(m < 1440) return 'há '+Math.round(m/60)+' h';
+  return 'há '+Math.round(m/1440)+' d';
+}
+async function loadNews(n){
+  try{
+    const r = await fetch('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(n.rss));
+    const j = await r.json();
+    if(!r.ok || j.status !== 'ok') throw new Error('rss');
+    n.items = (j.items||[]).slice(0,8).map(i => {
+      let t = String(i.title||''), src = '';
+      const p = t.lastIndexOf(' - ');
+      if(p > 0){ src = t.slice(p+3); t = t.slice(0,p); }
+      return { t, src, d: new Date(String(i.pubDate||'').replace(' ','T')+'Z') };
+    });
+    n.err = false;
+  }catch(e){ if(!n.items.length) n.err = true; }
+  if(NEWS[curNews] === n) showNews(curNews, true);
+}
+async function loadFx(){
+  try{
+    const r = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL,BTC-BRL');
+    if(!r.ok) throw new Error(r.status);
+    const j = await r.json();
+    const mk = (nome, o) => { const v = parseFloat(o.bid); return { nome, p: parseFloat(o.pctChange), txt: v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits: v > 1000 ? 0 : 2}) }; };
+    fx = [mk('Dólar', j.USDBRL), mk('Euro', j.EURBRL), mk('Bitcoin', j.BTCBRL)];
+    if(NEWS[curNews].k === 'fin') showNews(curNews, true);
+  }catch(e){}
+}
+function showNews(i, instant){
+  curNews = i;
+  const n = NEWS[i], box = $('#news');
+  const draw = () => {
+    $('#nwTitle').textContent = n.ico+' '+n.t;
+    $('#nwDots').innerHTML = NEWS.map((x,k) => '<span class="'+(k===i?'on':'')+'"></span>').join('');
+    let h = '';
+    if(n.k === 'fin' && fx.length) h += '<div class="fx">'+fx.map(f => '<div>'+esc(f.nome)+'<b>'+esc(f.txt)+'</b><span class="'+(f.p>=0?'up':'dn')+'">'+(f.p>=0?'▲ ':'▼ ')+Math.abs(f.p).toFixed(2).replace('.',',')+'%</span></div>').join('')+'</div>';
+    const it = n.items.slice(0, n.k === 'fin' ? 5 : 7);
+    h += it.length ? '<div class="nw">'+it.map(x => '<div class="nw-i"><div class="t">'+esc(x.t)+'</div><div class="m">'+esc(x.src)+(x.d && !isNaN(x.d) ? ' · '+ago(x.d) : '')+'</div></div>').join('')+'</div>'
+      : '<div class="vazio">'+(n.err ? 'Sem conexão para notícias.' : 'Carregando notícias…')+'</div>';
+    box.innerHTML = h; box.scrollTop = 0; box.classList.remove('fade');
+  };
+  if(instant) draw(); else { box.classList.add('fade'); setTimeout(draw, 350); }
+}
+function nextNews(){ showNews((curNews+1) % NEWS.length); }
 
-function addMsg(cls, txt){
+/* ============ assistente (Gemini) ============ */
+let hist = [], speaking = false, wantListen = false, rec = null, armedUntil = 0, popT = null;
+
+function addMsg(cls, txt, quiet){
   const d = document.createElement('div'); d.className = 'msg '+cls; d.textContent = txt;
   const c = $('#chat'); c.appendChild(d);
-  while(c.children.length > 14) c.removeChild(c.firstChild);
-  $('#chatscroll').scrollTop = 1e9;
+  while(c.children.length > 10) c.removeChild(c.firstChild);
+  if(quiet) return;
+  const p = $('#chatpop'); p.classList.add('on'); p.scrollTop = 1e9;
+  clearTimeout(popT); popT = setTimeout(() => p.classList.remove('on'), 30000);
 }
 function contexto(){
-  const now = new Date();
+  const now = new Date(), lim = new Date(now.getTime() + 7*86400000);
   let s = 'Agora: '+now.toLocaleString('pt-BR',{dateStyle:'full',timeStyle:'short'})+'.\n';
   if(wxData){
     const c = wxData.current, D = wxData.daily;
     s += 'CLIMA em '+cfg.cidade+': '+Math.round(c.temperature_2m)+'°C, '+WMO(c.weather_code)[1]+', umidade '+c.relative_humidity_2m+'%, vento '+Math.round(c.wind_speed_10m)+' km/h. ';
     s += 'Próximos dias: '+D.time.map((t,i) => new Date(t+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long'})+' '+Math.round(D.temperature_2m_min[i])+'-'+Math.round(D.temperature_2m_max[i])+'°C, chuva '+D.precipitation_probability_max[i]+'%').join('; ')+'.\n';
   }
-  if(events.length){
-    s += 'AGENDA (próximos 7 dias):\n'+events.slice(0,30).map(e => '- '+e.ini.toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short'})+' '+(e.diaInteiro?'dia todo':e.ini.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'–'+e.fim.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}))+': '+e.titulo+(e.local?' ('+e.local+')':'')).join('\n')+'\n';
+  const prox = events.filter(e => e.fim > now && e.ini < lim);
+  if(prox.length){
+    s += 'AGENDA (próximos 7 dias):\n'+prox.slice(0,30).map(e => '- '+e.ini.toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short'})+' '+(e.diaInteiro?'dia todo':e.ini.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'–'+e.fim.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}))+': '+e.titulo+(e.local?' ('+e.local+')':'')).join('\n')+'\n';
   } else if(tok) s += 'AGENDA: sem compromissos nos próximos 7 dias.\n';
   else s += 'AGENDA: indisponível (Google não conectado).\n';
   if(mailTotal !== null) s += 'E-MAILS: '+mailTotal+' não lidos na caixa de entrada. Mais recentes: '+(mails.map(m => m.de+' — '+m.assunto).join(' | ')||'nenhum')+'.\n';
+  const ns = NEWS.filter(n => n.items.length);
+  if(ns.length) s += 'NOTÍCIAS (manchetes recentes):\n'+ns.map(n => n.t+': '+n.items.slice(0,4).map(i => i.t).join(' | ')).join('\n')+'\n';
+  if(fx.length) s += 'COTAÇÕES: '+fx.map(f => f.nome+' '+f.txt+' ('+(f.p>=0?'+':'')+f.p.toFixed(2)+'%)').join(', ')+'.\n';
   return s;
 }
 async function perguntar(q){
   if(!cfg.geminiKey){ return 'Falta a chave do Gemini. Abra as configurações e cole a chave de API.'; }
-  const sys = 'Você é o assistente pessoal de '+cfg.nome+', rodando em um painel de tablet. Responda sempre em português do Brasil, de forma natural e curta (até 3 frases), pensada para ser falada em voz alta, sem markdown, sem listas e sem emojis. Use o contexto abaixo quando a pergunta envolver agenda, clima ou e-mails; se a informação não estiver no contexto, diga que não tem acesso a ela. Você apenas lê a agenda e os e-mails; não consegue criar nem alterar nada.\n\nCONTEXTO\n'+contexto();
+  const sys = 'Você é o assistente pessoal de '+cfg.nome+', rodando em um painel de tablet. Responda sempre em português do Brasil, de forma natural e curta (até 3 frases), pensada para ser falada em voz alta, sem markdown, sem listas e sem emojis. Use o contexto abaixo quando a pergunta envolver agenda, clima, e-mails, notícias ou cotações; se a informação não estiver no contexto, diga que não tem acesso a ela. Você apenas lê a agenda e os e-mails; não consegue criar nem alterar nada.\n\nCONTEXTO\n'+contexto();
   hist.push({ role:'user', parts:[{text:q}] });
   hist = hist.slice(-8);
   const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(cfg.model)+':generateContent', {
@@ -513,13 +650,35 @@ $('#btnGeo').onclick = () => {
 $('#mic').onclick = () => { keepAwake(); wantListen ? stopVoice() : startVoice(); };
 $('#send').onclick = () => { const v = $('#q').value; $('#q').value = ''; ask(v); };
 $('#q').addEventListener('keydown', e => { if(e.key === 'Enter') $('#send').click(); });
+$('#btnMail').onclick = () => $('#mailpop').classList.toggle('on');
+$('#mailpop').onclick = () => $('#mailpop').classList.remove('on');
+$('#chatpop').onclick = () => $('#chatpop').classList.remove('on');
+$('#newscard').onclick = nextNews;
+function recarregaCal(){ renderCal(); renderAgenda(); if(tok && tok.exp > Date.now()) loadCalendar().catch(() => {}); }
+$('#calPrev').onclick = () => { view = { y: view.m === 0 ? view.y-1 : view.y, m: (view.m+11) % 12 }; recarregaCal(); };
+$('#calNext').onclick = () => { view = { y: view.m === 11 ? view.y+1 : view.y, m: (view.m+1) % 12 }; recarregaCal(); };
+$('#calHoje').onclick = () => { const d = new Date(); view = { y: d.getFullYear(), m: d.getMonth() }; selDay = null; recarregaCal(); };
+$('#days').addEventListener('click', e => {
+  const c = e.target.closest('.d'); if(!c) return;
+  const d = new Date(+c.dataset.t);
+  if(selDay && selDay.getTime() === d.getTime()) selDay = null;
+  else {
+    selDay = d;
+    if(d.getMonth() !== view.m){ view = { y: d.getFullYear(), m: d.getMonth() }; recarregaCal(); return; }
+  }
+  renderCal(); renderAgenda();
+});
 
 /* ============ inicialização ============ */
-addMsg('sis', 'Diga "'+(cfg.wake.split(',')[0].trim())+'" seguido da pergunta, ou digite abaixo.');
+addMsg('sis', 'Diga "'+(cfg.wake.split(',')[0].trim())+'" seguido da pergunta, ou digite abaixo.', true);
+renderCal();
 loadWeather(); setInterval(loadWeather, 15*60000);
+NEWS.forEach(loadNews); loadFx(); showNews(0, true);
+setInterval(() => { NEWS.forEach(loadNews); loadFx(); }, 15*60000);
+setInterval(nextNews, 20000);
 loadGIS();
 setInterval(() => { if(tok && tok.exp > Date.now()) refreshGoogle(); }, 5*60000);
-setInterval(renderAgenda, 30000);
+setInterval(() => { renderAgenda(); renderCal(); }, 30000);
 if('speechSynthesis' in window) speechSynthesis.getVoices();
 keepAwake();
 if(!cfg.clientId && !cfg.geminiKey) openCfg();
