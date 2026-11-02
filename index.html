@@ -585,12 +585,18 @@ function handleHeard(txt){
   const wakes = cfg.wake.split(',').map(norm).map(s => s.trim()).filter(Boolean).map(w => w.replace(/[.*+?^$}()|[\]\\]/g,'\\$&'));
   if(!wakes.length) return;
   // ativa com "gemini" ou com saudação + "gemini" no início da frase (ex.: "oi gemini", "bom dia gemini")
-  const re = new RegExp('^[\\s,.!?-]*(?:(?:oi|oie|ola|ei|eai|e ai|hey|opa|fala|alo|bom dia|boa tarde|boa noite)[\\s,.!?-]+)?(?:'+wakes.join('|')+')(?![a-z0-9])');
+  const re = new RegExp('^[\\s,.!?-]*(?:(?:oi|oie|ola|ei|eai|e ai|hey|opa|fala|alo|bom dia|boa tarde|boa noite)[\\s,.!?-]+)?(?:'+wakes.concat(wakes.includes('gemini') ? ['[gj]e+m+[iey]+n+[iaey]*'] : []).join('|')+')(?![a-z0-9])');
   const m = re.exec(n);
   if(!m) return;
   const rest = txt.slice(m[0].length).replace(/^[\s,.:;!?\-–]+/, '');
   if(rest.length < 3){ armedUntil = Date.now() + 8000; setMic('Pode falar…', 'arm'); setTimeout(() => { if(Date.now() >= armedUntil && wantListen && !speaking) setMic('Ouvindo','on'); }, 8200); return; }
   ask(rest);
+}
+let flashT = null;
+function flashHeard(t, isErr){
+  $('#miclbl').textContent = (isErr ? 'Mic ' : 'Ouvi: ')+t.slice(0,30);
+  clearTimeout(flashT);
+  flashT = setTimeout(() => { if(!speaking && Date.now() >= armedUntil) setMic(wantListen ? 'Ouvindo' : 'Voz desligada', wantListen ? 'on' : ''); }, 5000);
 }
 function startVoice(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -598,8 +604,9 @@ function startVoice(){
   wantListen = true; store.set('voz_on', true);
   if(rec) return;
   rec = new SR(); rec.lang = 'pt-BR'; rec.continuous = true; rec.interimResults = false;
-  rec.onresult = e => { for(let i = e.resultIndex; i < e.results.length; i++){ if(e.results[i].isFinal) handleHeard(e.results[i][0].transcript.trim()); } };
+  rec.onresult = e => { for(let i = e.resultIndex; i < e.results.length; i++){ if(e.results[i].isFinal){ const tr = e.results[i][0].transcript.trim(); flashHeard(tr); handleHeard(tr); } } };
   rec.onerror = e => {
+    if(e.error !== 'no-speech' && e.error !== 'aborted') flashHeard('erro: '+e.error, true);
     if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){ wantListen = false; store.set('voz_on', false); setMic('Microfone bloqueado',''); addMsg('sis','Permita o microfone nas configurações do site.'); }
   };
   rec.onend = () => { rec = null; if(wantListen && !speaking) setTimeout(startVoice, 500); };
