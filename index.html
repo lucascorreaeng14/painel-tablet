@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0b0f14">
+<title>Painel</title>
+<style>
+:root{
+  --bg:#0b0f14; --card:#131a22; --card2:#18212b; --line:#243040;
+  --txt:#e8eef5; --mut:#8fa1b5; --acc:#5cc8ff; --ok:#6be6a0; --warn:#ffcc66; --bad:#ff7a7a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;-webkit-tap-highlight-color:transparent}
+body{transition:filter .6s}
+body.noite{filter:brightness(.45)}
+#app{height:100%;display:grid;grid-template-columns:1fr 1.25fr 1fr;grid-template-rows:1fr auto;gap:12px;padding:12px}
+@media (max-aspect-ratio:1/1){#app{grid-template-columns:1fr;grid-template-rows:auto auto auto auto;overflow-y:auto}html,body{overflow:auto}}
+.col{display:flex;flex-direction:column;gap:12px;min-height:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px;min-height:0}
+.card h2{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);font-weight:600;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.scroll{overflow-y:auto;min-height:0;flex:1;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+
+/* relógio */
+#clock{font-size:clamp(3.6rem,9vw,7.5rem);font-weight:200;line-height:1;letter-spacing:-.02em}
+#date{color:var(--mut);font-size:clamp(1rem,1.9vw,1.4rem);margin-top:6px}
+#date::first-letter,.dia h3::first-letter{text-transform:uppercase}
+
+/* clima */
+.wx-now{display:flex;align-items:center;gap:14px}
+.wx-ico{font-size:clamp(3rem,6vw,4.6rem);line-height:1}
+.wx-temp{font-size:clamp(2.4rem,5vw,3.6rem);font-weight:300;line-height:1}
+.wx-desc{color:var(--mut);font-size:1rem;margin-top:4px}
+.wx-meta{display:flex;gap:16px;flex-wrap:wrap;color:var(--mut);font-size:.9rem;margin-top:12px}
+.wx-hours{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.wx-h{background:var(--card2);border-radius:12px;padding:8px 6px;text-align:center;font-size:.85rem}
+.wx-h b{display:block;font-weight:500;font-size:1.05rem;margin:2px 0}
+.wx-h small{color:var(--acc)}
+.wx-days{margin-top:12px;display:grid;gap:6px}
+.wx-d{display:grid;grid-template-columns:3.2rem 1.6rem 1fr auto;align-items:center;gap:8px;font-size:.92rem}
+.wx-d span:last-child{color:var(--mut)}
+
+/* agenda */
+.dia{margin-bottom:14px}
+.dia h3{font-size:.9rem;color:var(--acc);font-weight:600;margin-bottom:6px}
+.ev{display:grid;grid-template-columns:4.4rem 1fr;gap:10px;padding:9px 11px;border-radius:12px;background:var(--card2);margin-bottom:6px;border-left:4px solid var(--acc)}
+.ev .h{color:var(--mut);font-size:.9rem;font-variant-numeric:tabular-nums}
+.ev .t{font-size:1.05rem;line-height:1.25}
+.ev .l{color:var(--mut);font-size:.82rem;margin-top:2px}
+.ev.passou{opacity:.4}
+.ev.agora{background:#1b3446;border-left-color:var(--ok)}
+.ev.prox{border-left-color:var(--warn)}
+.vazio{color:var(--mut);padding:10px 2px}
+
+/* e-mail */
+.mail{padding:8px 0;border-bottom:1px solid var(--line)}
+.mail:last-child{border:0}
+.mail .f{font-size:.82rem;color:var(--acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mail .s{font-size:.98rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{background:var(--acc);color:#04202e;border-radius:999px;padding:1px 9px;font-size:.78rem;font-weight:700;letter-spacing:0}
+
+/* assistente */
+#chat{display:flex;flex-direction:column;gap:8px}
+.msg{padding:9px 12px;border-radius:14px;font-size:1rem;line-height:1.35;max-width:94%}
+.msg.eu{align-self:flex-end;background:#1b3446}
+.msg.ia{align-self:flex-start;background:var(--card2)}
+.msg.sis{align-self:center;color:var(--mut);font-size:.85rem;background:none}
+
+/* barra inferior */
+#bar{grid-column:1/-1;display:flex;gap:10px;align-items:center}
+#mic{border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:999px;padding:12px 18px;font-size:1rem;display:flex;align-items:center;gap:10px;cursor:pointer;white-space:nowrap}
+#mic .dot{width:12px;height:12px;border-radius:50%;background:var(--mut)}
+#mic.on .dot{background:var(--ok);box-shadow:0 0 0 0 rgba(107,230,160,.6);animation:pulse 2s infinite}
+#mic.arm .dot{background:var(--warn);animation:none}
+@keyframes pulse{70%{box-shadow:0 0 0 10px rgba(107,230,160,0)}100%{box-shadow:0 0 0 0 rgba(107,230,160,0)}}
+#q{flex:1;border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:999px;padding:13px 18px;font-size:1rem;outline:none;min-width:0}
+#q:focus{border-color:var(--acc)}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:999px;padding:12px 16px;font-size:1rem;cursor:pointer}
+.btn.pri{background:var(--acc);color:#04202e;border-color:var(--acc);font-weight:600}
+.btn:active{transform:scale(.97)}
+
+/* configurações */
+#cfgwrap{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:10;padding:14px}
+#cfgwrap.on{display:flex}
+#cfg{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px;width:min(640px,100%);max-height:100%;overflow-y:auto}
+#cfg h1{font-size:1.2rem;margin-bottom:4px}
+#cfg p.n{color:var(--mut);font-size:.88rem;margin-bottom:14px;line-height:1.4}
+#cfg label{display:block;font-size:.82rem;color:var(--mut);margin:12px 0 4px}
+#cfg input[type=text],#cfg input[type=password]{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:11px 12px;font-size:1rem}
+#cfg .row{display:flex;gap:10px}
+#cfg .row>div{flex:1}
+#cfg .chk{display:flex;align-items:center;gap:8px;margin-top:14px;color:var(--txt);font-size:.95rem}
+#cfg .acts{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
+#gst{font-size:.82rem;color:var(--warn)}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- coluna 1: relógio e clima -->
+  <section class="col">
+    <div class="card">
+      <div id="clock">--:--</div>
+      <div id="date"></div>
+    </div>
+    <div class="card" style="flex:1;display:flex;flex-direction:column">
+      <h2><span id="wxloc">Clima</span><span id="wxupd" style="text-transform:none;letter-spacing:0"></span></h2>
+      <div class="scroll" id="wx"><div class="vazio">Carregando clima…</div></div>
+    </div>
+  </section>
+
+  <!-- coluna 2: agenda -->
+  <section class="col">
+    <div class="card" style="flex:1;display:flex;flex-direction:column">
+      <h2><span>Agenda</span><span><span id="gst"></span> <button class="btn" id="btnG" style="padding:5px 12px;font-size:.8rem;display:none">Conectar Google</button></span></h2>
+      <div class="scroll" id="agenda"><div class="vazio">Conecte sua conta Google para ver a agenda.</div></div>
+    </div>
+  </section>
+
+  <!-- coluna 3: e-mails e assistente -->
+  <section class="col">
+    <div class="card" style="max-height:38%;display:flex;flex-direction:column">
+      <h2><span>E-mails não lidos</span><span class="badge" id="mailn" style="display:none"></span></h2>
+      <div class="scroll" id="mails"><div class="vazio">—</div></div>
+    </div>
+    <div class="card" style="flex:1;display:flex;flex-direction:column">
+      <h2><span>Assistente</span></h2>
+      <div class="scroll" id="chatscroll"><div id="chat"></div></div>
+    </div>
+  </section>
+
+  <!-- barra -->
+  <div id="bar">
+    <button id="mic" title="Ativar ou desativar a escuta por voz"><span class="dot"></span><span id="miclbl">Voz desligada</span></button>
+    <input id="q" type="text" placeholder="Digite uma pergunta ou diga a palavra de ativação…" autocomplete="off">
+    <button class="btn pri" id="send">Enviar</button>
+    <button class="btn" id="btnFull" title="Tela cheia">⛶</button>
+    <button class="btn" id="btnCfg" title="Configurações">⚙</button>
+  </div>
+</div>
+
+<div id="cfgwrap">
+  <div id="cfg">
+    <h1>Configurações</h1>
+    <p class="n">Tudo fica salvo apenas neste tablet (armazenamento do navegador). Sem as chaves abaixo, o relógio e o clima funcionam, mas agenda, e-mail e assistente ficam desligados.</p>
+
+    <label>Google Client ID (OAuth, tipo "Aplicativo da Web")</label>
+    <input type="text" id="f_client" placeholder="123456-abc.apps.googleusercontent.com">
+
+    <label>Chave de API do Gemini (Google AI Studio)</label>
+    <input type="password" id="f_key" placeholder="AIza…">
+
+    <div class="row">
+      <div><label>Modelo do Gemini</label><input type="text" id="f_model"></div>
+      <div><label>Seu nome (como o assistente te chama)</label><input type="text" id="f_nome"></div>
+    </div>
+
+    <label>Palavras de ativação (separadas por vírgula)</label>
+    <input type="text" id="f_wake" placeholder="gemini, jemini, assistente">
+
+    <div class="row">
+      <div><label>Cidade</label><input type="text" id="f_cidade"></div>
+      <div><label>Latitude</label><input type="text" id="f_lat"></div>
+      <div><label>Longitude</label><input type="text" id="f_lon"></div>
+    </div>
+    <div class="acts" style="justify-content:flex-start;margin-top:8px"><button class="btn" id="btnGeo">Usar localização do tablet</button></div>
+
+    <label class="chk"><input type="checkbox" id="f_voz"> Assistente responde falando</label>
+    <label class="chk"><input type="checkbox" id="f_noite"> Escurecer a tela entre 23h e 6h</label>
+
+    <div class="acts">
+      <button class="btn" id="cfgCancel">Fechar</button>
+      <button class="btn pri" id="cfgSave">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ utilidades ============ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); }catch{ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch{} }
+};
+const norm = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+
+let cfg = Object.assign({
+  clientId:'', geminiKey:'', model:'gemini-3.5-flash', nome:'Lucas',
+  wake:'gemini, jemini, assistente', cidade:'Belém', lat:-1.4558, lon:-48.4902,
+  voz:true, noite:true
+}, store.get('cfg', {}));
+
+/* ============ relógio ============ */
+function tick(){
+  const d = new Date();
+  $('#clock').textContent = d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  $('#date').textContent = d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const h = d.getHours();
+  document.body.classList.toggle('noite', !!cfg.noite && (h >= 23 || h < 6));
+}
+setInterval(tick, 1000); tick();
+
+/* ============ clima (Open-Meteo, sem chave) ============ */
+let wxData = null;
+const WMO = c => {
+  if(c===0) return ['☀️','Céu limpo'];
+  if(c===1) return ['🌤️','Predomínio de sol'];
+  if(c===2) return ['⛅','Parcialmente nublado'];
+  if(c===3) return ['☁️','Nublado'];
+  if(c===45||c===48) return ['🌫️','Neblina'];
+  if(c>=51&&c<=57) return ['🌦️','Garoa'];
+  if(c>=61&&c<=67) return ['🌧️','Chuva'];
+  if(c>=71&&c<=77) return ['❄️','Neve'];
+  if(c>=80&&c<=82) return ['🌧️','Pancadas de chuva'];
+  if(c>=95) return ['⛈️','Trovoadas'];
+  return ['🌡️','—'];
+};
+async function loadWeather(){
+  try{
+    const u = 'https://api.open-meteo.com/v1/forecast?latitude='+cfg.lat+'&longitude='+cfg.lon+
+      '&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,precipitation'+
+      '&hourly=temperature_2m,precipitation_probability,weather_code'+
+      '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max'+
+      '&timezone=auto&forecast_days=5';
+    const r = await fetch(u); if(!r.ok) throw new Error(r.status);
+    wxData = await r.json(); renderWeather();
+  }catch(e){ if(!wxData) $('#wx').innerHTML = '<div class="vazio">Sem conexão para o clima.</div>'; }
+}
+function renderWeather(){
+  if(!wxData) return;
+  const c = wxData.current, [ico,desc] = WMO(c.weather_code);
+  $('#wxloc').textContent = cfg.cidade || 'Clima';
+  $('#wxupd').textContent = 'atualizado '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const H = wxData.hourly, now = Date.now();
+  let i0 = H.time.findIndex(t => new Date(t).getTime() >= now - 30*60000); if(i0<0) i0 = 0;
+  let hours = '';
+  for(let k=1;k<=4;k++){
+    const i = i0 + k*2; if(i>=H.time.length) break;
+    hours += '<div class="wx-h">'+new Date(H.time[i]).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+
+      '<b>'+WMO(H.weather_code[i])[0]+' '+Math.round(H.temperature_2m[i])+'°</b><small>'+(H.precipitation_probability[i]??0)+'%</small></div>';
+  }
+  const D = wxData.daily; let days = '';
+  for(let i=0;i<D.time.length;i++){
+    const dt = new Date(D.time[i]+'T12:00:00');
+    days += '<div class="wx-d"><span>'+(i===0?'Hoje':dt.toLocaleDateString('pt-BR',{weekday:'short'}).replace('.',''))+'</span><span>'+WMO(D.weather_code[i])[0]+
+      '</span><span>'+Math.round(D.temperature_2m_min[i])+'° / '+Math.round(D.temperature_2m_max[i])+'°</span><span>💧'+(D.precipitation_probability_max[i]??0)+'%</span></div>';
+  }
+  $('#wx').innerHTML =
+    '<div class="wx-now"><div class="wx-ico">'+ico+'</div><div><div class="wx-temp">'+Math.round(c.temperature_2m)+'°C</div><div class="wx-desc">'+esc(desc)+' · sensação '+Math.round(c.apparent_temperature)+'°</div></div></div>'+
+    '<div class="wx-meta"><span>💧 Umidade '+c.relative_humidity_2m+'%</span><span>💨 Vento '+Math.round(c.wind_speed_10m)+' km/h</span><span>☔ '+c.precipitation+' mm agora</span></div>'+
+    '<div class="wx-hours">'+hours+'</div><div class="wx-days">'+days+'</div>';
+}
+
+/* ============ Google (Agenda + Gmail) ============ */
+const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.readonly';
+let tokenClient = null, tok = store.get('tok', null), renewTimer = null;
+let events = [], mails = [], mailTotal = null;
+
+function setG(msg, showBtn){ $('#gst').textContent = msg || ''; $('#btnG').style.display = showBtn ? '' : 'none'; }
+
+function initAuth(){
+  if(!cfg.clientId){ setG('Configure o Client ID em ⚙', false); return; }
+  if(!(window.google && google.accounts && google.accounts.oauth2)) return;
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: cfg.clientId, scope: SCOPES,
+    callback: r => {
+      if(r.error){ setG('Erro Google: '+r.error, true); return; }
+      tok = { t:r.access_token, exp: Date.now() + (r.expires_in - 120)*1000 };
+      store.set('tok', tok); store.set('google_ok', true);
+      setG('', false); refreshGoogle(); scheduleRenew();
+    },
+    error_callback: () => setG('Toque para reconectar', true)
+  });
+  if(tok && tok.exp > Date.now()){ setG('', false); refreshGoogle(); scheduleRenew(); }
+  else if(store.get('google_ok', false)){ setG('Reconectando…', true); try{ tokenClient.requestAccessToken({prompt:''}); }catch{} }
+  else setG('', true);
+}
+function scheduleRenew(){
+  clearTimeout(renewTimer);
+  renewTimer = setTimeout(() => { try{ tokenClient.requestAccessToken({prompt:''}); }catch{} }, Math.max(15000, tok.exp - Date.now()));
+}
+function loadGIS(){
+  if(!cfg.clientId) { initAuth(); return; }
+  if(window.google && google.accounts) { initAuth(); return; }
+  const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true;
+  s.onload = initAuth; s.onerror = () => setG('Sem conexão com o Google', false);
+  document.head.appendChild(s);
+}
+async function gget(url){
+  if(!tok || tok.exp < Date.now()) throw new Error('sem token');
+  const r = await fetch(url, { headers:{ Authorization:'Bearer '+tok.t }});
+  if(r.status === 401){ tok = null; store.set('tok', null); setG('Toque para reconectar', true); throw new Error('401'); }
+  if(!r.ok) throw new Error(r.status);
+  return r.json();
+}
+async function loadCalendar(){
+  const ini = new Date(); ini.setHours(0,0,0,0);
+  const fim = new Date(ini.getTime() + 7*86400000);
+  const cals = await gget('https://www.googleapis.com/calendar/v3/users/me/calendarList?minAccessRole=reader');
+  const sel = (cals.items||[]).filter(c => c.selected !== false);
+  const all = await Promise.all(sel.map(async c => {
+    try{
+      const j = await gget('https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(c.id)+'/events?singleEvents=true&orderBy=startTime&maxResults=40'+
+        '&timeMin='+encodeURIComponent(ini.toISOString())+'&timeMax='+encodeURIComponent(fim.toISOString()));
+      return (j.items||[]).filter(e => e.status !== 'cancelled').map(e => ({
+        id:e.id, titulo:e.summary||'(sem título)', local:e.location||'',
+        diaInteiro: !!e.start.date,
+        ini: new Date(e.start.dateTime || e.start.date+'T00:00:00'),
+        fim: new Date(e.end.dateTime || e.end.date+'T00:00:00'),
+        cor: c.backgroundColor || '#5cc8ff', cal: c.summaryOverride || c.summary
+      }));
+    }catch{ return []; }
+  }));
+  events = all.flat().sort((a,b) => a.ini - b.ini);
+  renderAgenda();
+}
+function dayKey(d){ return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function dayLabel(d){
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const dd = new Date(d); dd.setHours(0,0,0,0);
+  const diff = Math.round((dd - hoje)/86400000);
+  const base = d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'short'});
+  return diff===0 ? 'Hoje · '+base : diff===1 ? 'Amanhã · '+base : base;
+}
+function renderAgenda(){
+  const box = $('#agenda');
+  if(!tok && !events.length){ return; }
+  if(!events.length){ box.innerHTML = '<div class="vazio">Nenhum compromisso nos próximos 7 dias.</div>'; return; }
+  const now = new Date(), grupos = {};
+  events.forEach(e => {
+    // eventos de vários dias aparecem no dia de início; ignora os que já terminaram antes de hoje
+    (grupos[dayKey(e.ini)] = grupos[dayKey(e.ini)] || []).push(e);
+  });
+  let proximo = events.find(e => !e.diaInteiro && e.ini > now);
+  let html = '';
+  Object.keys(grupos).forEach(k => {
+    const lista = grupos[k];
+    html += '<div class="dia"><h3>'+esc(dayLabel(lista[0].ini))+'</h3>';
+    lista.forEach(e => {
+      const agora = !e.diaInteiro && e.ini <= now && e.fim > now;
+      const passou = !e.diaInteiro && e.fim <= now;
+      const cls = 'ev'+(agora?' agora':'')+(passou?' passou':'')+(proximo && proximo.id===e.id && !agora?' prox':'');
+      const hora = e.diaInteiro ? 'dia todo' : e.ini.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      html += '<div class="'+cls+'" style="border-left-color:'+esc(agora?'':e.cor)+'"><div class="h">'+hora+'</div><div><div class="t">'+esc(e.titulo)+'</div>'+
+        (e.local?'<div class="l">📍 '+esc(e.local)+'</div>':'')+'</div></div>';
+    });
+    html += '</div>';
+  });
+  box.innerHTML = html;
+}
+async function loadMail(){
+  const lab = await gget('https://gmail.googleapis.com/gmail/v1/users/me/labels/INBOX');
+  mailTotal = lab.messagesUnread ?? 0;
+  const lst = await gget('https://gmail.googleapis.com/gmail/v1/users/me/messages?q='+encodeURIComponent('is:unread in:inbox')+'&maxResults=6');
+  mails = await Promise.all((lst.messages||[]).map(async m => {
+    try{
+      const j = await gget('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=From&metadataHeaders=Subject');
+      const h = n => (j.payload.headers.find(x => x.name === n)||{}).value || '';
+      return { de: h('From').replace(/<.*>/,'').replace(/"/g,'').trim() || h('From'), assunto: h('Subject') || '(sem assunto)' };
+    }catch{ return null; }
+  }));
+  mails = mails.filter(Boolean);
+  renderMail();
+}
+function renderMail(){
+  const b = $('#mailn');
+  if(mailTotal === null) return;
+  b.style.display = ''; b.textContent = mailTotal;
+  $('#mails').innerHTML = mails.length ? mails.map(m => '<div class="mail"><div class="f">'+esc(m.de)+'</div><div class="s">'+esc(m.assunto)+'</div></div>').join('')
+    : '<div class="vazio">Caixa de entrada em dia.</div>';
+}
+async function refreshGoogle(){
+  try{ await loadCalendar(); }catch(e){ if(String(e.message)!=='401') setG('Falha na agenda', true); }
+  try{ await loadMail(); }catch(e){}
+}
+
+/* ============ assistente (Gemini) ============ */
+let hist = [], speaking = false, wantListen = false, rec = null, armedUntil = 0;
+
+function addMsg(cls, txt){
+  const d = document.createElement('div'); d.className = 'msg '+cls; d.textContent = txt;
+  const c = $('#chat'); c.appendChild(d);
+  while(c.children.length > 14) c.removeChild(c.firstChild);
+  $('#chatscroll').scrollTop = 1e9;
+}
+function contexto(){
+  const now = new Date();
+  let s = 'Agora: '+now.toLocaleString('pt-BR',{dateStyle:'full',timeStyle:'short'})+'.\n';
+  if(wxData){
+    const c = wxData.current, D = wxData.daily;
+    s += 'CLIMA em '+cfg.cidade+': '+Math.round(c.temperature_2m)+'°C, '+WMO(c.weather_code)[1]+', umidade '+c.relative_humidity_2m+'%, vento '+Math.round(c.wind_speed_10m)+' km/h. ';
+    s += 'Próximos dias: '+D.time.map((t,i) => new Date(t+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long'})+' '+Math.round(D.temperature_2m_min[i])+'-'+Math.round(D.temperature_2m_max[i])+'°C, chuva '+D.precipitation_probability_max[i]+'%').join('; ')+'.\n';
+  }
+  if(events.length){
+    s += 'AGENDA (próximos 7 dias):\n'+events.slice(0,30).map(e => '- '+e.ini.toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short'})+' '+(e.diaInteiro?'dia todo':e.ini.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'–'+e.fim.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}))+': '+e.titulo+(e.local?' ('+e.local+')':'')).join('\n')+'\n';
+  } else if(tok) s += 'AGENDA: sem compromissos nos próximos 7 dias.\n';
+  else s += 'AGENDA: indisponível (Google não conectado).\n';
+  if(mailTotal !== null) s += 'E-MAILS: '+mailTotal+' não lidos na caixa de entrada. Mais recentes: '+(mails.map(m => m.de+' — '+m.assunto).join(' | ')||'nenhum')+'.\n';
+  return s;
+}
+async function perguntar(q){
+  if(!cfg.geminiKey){ return 'Falta a chave do Gemini. Abra as configurações e cole a chave de API.'; }
+  const sys = 'Você é o assistente pessoal de '+cfg.nome+', rodando em um painel de tablet. Responda sempre em português do Brasil, de forma natural e curta (até 3 frases), pensada para ser falada em voz alta, sem markdown, sem listas e sem emojis. Use o contexto abaixo quando a pergunta envolver agenda, clima ou e-mails; se a informação não estiver no contexto, diga que não tem acesso a ela. Você apenas lê a agenda e os e-mails; não consegue criar nem alterar nada.\n\nCONTEXTO\n'+contexto();
+  hist.push({ role:'user', parts:[{text:q}] });
+  hist = hist.slice(-8);
+  const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(cfg.model)+':generateContent', {
+    method:'POST', headers:{ 'Content-Type':'application/json', 'x-goog-api-key': cfg.geminiKey },
+    body: JSON.stringify({ systemInstruction:{ parts:[{text:sys}] }, contents: hist, generationConfig:{ temperature:.5, maxOutputTokens:1024 } })
+  });
+  const j = await r.json();
+  if(!r.ok) throw new Error((j.error && j.error.message) || r.status);
+  const out = ((j.candidates||[])[0]?.content?.parts||[]).map(p => p.text||'').join('').trim() || 'Não consegui formular uma resposta.';
+  hist.push({ role:'model', parts:[{text:out}] });
+  return out;
+}
+async function ask(q){
+  q = (q||'').trim(); if(!q) return;
+  addMsg('eu', q);
+  setMic('pensando…', 'arm');
+  let resp;
+  try{ resp = await perguntar(q); }catch(e){ resp = 'Erro ao falar com o Gemini: '+e.message; hist.pop(); }
+  addMsg('ia', resp);
+  speak(resp);
+  if(!speaking) setMic(wantListen ? 'Ouvindo' : 'Voz desligada', wantListen ? 'on' : '');
+}
+function speak(text){
+  if(!cfg.voz || !('speechSynthesis' in window)) return;
+  const clean = text.replace(/[*_#`>]/g,'').replace(/\s+/g,' ');
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(clean); u.lang = 'pt-BR';
+  const v = speechSynthesis.getVoices().find(x => /pt[-_]BR/i.test(x.lang)); if(v) u.voice = v;
+  speaking = true;
+  if(rec){ try{ rec.abort(); }catch{} }
+  const fim = () => { speaking = false; if(wantListen) startVoice(); else setMic('Voz desligada',''); };
+  u.onend = fim; u.onerror = fim;
+  speechSynthesis.speak(u);
+}
+
+/* ---- escuta contínua com palavra de ativação ---- */
+function setMic(txt, cls){ $('#miclbl').textContent = txt; const m = $('#mic'); m.className = cls || ''; }
+function handleHeard(txt){
+  const n = norm(txt);
+  if(Date.now() < armedUntil){ armedUntil = 0; ask(txt); return; }
+  const wakes = cfg.wake.split(',').map(norm).map(s => s.trim()).filter(Boolean);
+  let best = -1, len = 0;
+  wakes.forEach(w => { const i = n.indexOf(w); if(i >= 0 && (best < 0 || i < best)){ best = i; len = w.length; } });
+  if(best < 0) return;
+  const rest = txt.slice(best + len).replace(/^[\s,.:;!?\-–]+/, '');
+  if(rest.length < 3){ armedUntil = Date.now() + 8000; setMic('Pode falar…', 'arm'); setTimeout(() => { if(Date.now() >= armedUntil && wantListen && !speaking) setMic('Ouvindo','on'); }, 8200); return; }
+  ask(rest);
+}
+function startVoice(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ addMsg('sis','Este navegador não tem reconhecimento de voz. Use o Chrome.'); return; }
+  wantListen = true; store.set('voz_on', true);
+  if(rec) return;
+  rec = new SR(); rec.lang = 'pt-BR'; rec.continuous = true; rec.interimResults = false;
+  rec.onresult = e => { for(let i = e.resultIndex; i < e.results.length; i++){ if(e.results[i].isFinal) handleHeard(e.results[i][0].transcript.trim()); } };
+  rec.onerror = e => {
+    if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){ wantListen = false; store.set('voz_on', false); setMic('Microfone bloqueado',''); addMsg('sis','Permita o microfone nas configurações do site.'); }
+  };
+  rec.onend = () => { rec = null; if(wantListen && !speaking) setTimeout(startVoice, 500); };
+  try{ rec.start(); setMic('Ouvindo','on'); }catch{ rec = null; }
+}
+function stopVoice(){
+  wantListen = false; store.set('voz_on', false);
+  if(rec){ try{ rec.abort(); }catch{} rec = null; }
+  speechSynthesis.cancel(); speaking = false;
+  setMic('Voz desligada','');
+}
+
+/* ============ tela sempre ligada / tela cheia ============ */
+let wl = null;
+async function keepAwake(){ try{ if('wakeLock' in navigator) wl = await navigator.wakeLock.request('screen'); }catch{} }
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') keepAwake(); });
+function toggleFull(){
+  const el = document.documentElement;
+  if(!document.fullscreenElement){ (el.requestFullscreen || el.webkitRequestFullscreen || (()=>{})).call(el); }
+  else (document.exitFullscreen || document.webkitExitFullscreen || (()=>{})).call(document);
+}
+
+/* ============ configurações ============ */
+function openCfg(){
+  $('#f_client').value = cfg.clientId; $('#f_key').value = cfg.geminiKey; $('#f_model').value = cfg.model; $('#f_nome').value = cfg.nome;
+  $('#f_wake').value = cfg.wake; $('#f_cidade').value = cfg.cidade; $('#f_lat').value = cfg.lat; $('#f_lon').value = cfg.lon;
+  $('#f_voz').checked = !!cfg.voz; $('#f_noite').checked = !!cfg.noite;
+  $('#cfgwrap').classList.add('on');
+}
+function closeCfg(){ $('#cfgwrap').classList.remove('on'); }
+function saveCfg(){
+  const num = (v, d) => { const n = parseFloat(String(v).replace(',','.')); return isNaN(n) ? d : n; };
+  cfg = {
+    clientId: $('#f_client').value.trim(), geminiKey: $('#f_key').value.trim(), model: $('#f_model').value.trim() || 'gemini-3.5-flash',
+    nome: $('#f_nome').value.trim() || 'Lucas', wake: $('#f_wake').value.trim() || 'gemini',
+    cidade: $('#f_cidade').value.trim(), lat: num($('#f_lat').value, -1.4558), lon: num($('#f_lon').value, -48.4902),
+    voz: $('#f_voz').checked, noite: $('#f_noite').checked
+  };
+  store.set('cfg', cfg); closeCfg(); tick(); loadWeather(); loadGIS();
+}
+
+/* ============ eventos ============ */
+$('#btnCfg').onclick = openCfg;
+$('#cfgCancel').onclick = closeCfg;
+$('#cfgSave').onclick = saveCfg;
+$('#btnFull').onclick = () => { toggleFull(); keepAwake(); };
+$('#btnG').onclick = () => { if(tokenClient){ try{ tokenClient.requestAccessToken({prompt: store.get('google_ok', false) ? '' : 'consent'}); }catch{} } else loadGIS(); };
+$('#btnGeo').onclick = () => {
+  if(!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(p => { $('#f_lat').value = p.coords.latitude.toFixed(4); $('#f_lon').value = p.coords.longitude.toFixed(4); }, () => {});
+};
+$('#mic').onclick = () => { keepAwake(); wantListen ? stopVoice() : startVoice(); };
+$('#send').onclick = () => { const v = $('#q').value; $('#q').value = ''; ask(v); };
+$('#q').addEventListener('keydown', e => { if(e.key === 'Enter') $('#send').click(); });
+
+/* ============ inicialização ============ */
+addMsg('sis', 'Diga "'+(cfg.wake.split(',')[0].trim())+'" seguido da pergunta, ou digite abaixo.');
+loadWeather(); setInterval(loadWeather, 15*60000);
+loadGIS();
+setInterval(() => { if(tok && tok.exp > Date.now()) refreshGoogle(); }, 5*60000);
+setInterval(renderAgenda, 30000);
+if('speechSynthesis' in window) speechSynthesis.getVoices();
+keepAwake();
+if(!cfg.clientId && !cfg.geminiKey) openCfg();
+if(store.get('voz_on', false)) setMic('Toque para ativar a voz','');   // o navegador exige um toque para liberar o microfone
+</script>
+</body>
+</html>
