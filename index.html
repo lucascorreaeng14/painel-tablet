@@ -206,7 +206,7 @@ a.nw-i:active{opacity:.6}
     </div>
 
     <label>Palavras de ativação (separadas por vírgula)</label>
-    <input type="text" id="f_wake" placeholder="gemini, jemini, assistente">
+    <input type="text" id="f_wake" placeholder="gemini, jemini">
 
     <div class="row">
       <div><label>Cidade</label><input type="text" id="f_cidade"></div>
@@ -237,7 +237,7 @@ const norm = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerC
 
 let cfg = Object.assign({
   clientId:'', geminiKey:'', model:'gemini-3.5-flash', nome:'Lucas',
-  wake:'gemini, jemini, assistente', cidade:'Belém', lat:-1.4558, lon:-48.4902,
+  wake:'gemini, jemini', cidade:'Belém', lat:-1.4558, lon:-48.4902,
   voz:true, noite:true
 }, store.get('cfg', {}));
 
@@ -582,11 +582,13 @@ function setMic(txt, cls){ $('#miclbl').textContent = txt; const m = $('#mic'); 
 function handleHeard(txt){
   const n = norm(txt);
   if(Date.now() < armedUntil){ armedUntil = 0; ask(txt); return; }
-  const wakes = cfg.wake.split(',').map(norm).map(s => s.trim()).filter(Boolean);
-  let best = -1, len = 0;
-  wakes.forEach(w => { const i = n.indexOf(w); if(i >= 0 && (best < 0 || i < best)){ best = i; len = w.length; } });
-  if(best < 0) return;
-  const rest = txt.slice(best + len).replace(/^[\s,.:;!?\-–]+/, '');
+  const wakes = cfg.wake.split(',').map(norm).map(s => s.trim()).filter(Boolean).map(w => w.replace(/[.*+?^$}()|[\]\\]/g,'\\$&'));
+  if(!wakes.length) return;
+  // ativa com "gemini" ou com saudação + "gemini" no início da frase (ex.: "oi gemini", "bom dia gemini")
+  const re = new RegExp('^[\\s,.!?-]*(?:(?:oi|oie|ola|ei|eai|e ai|hey|opa|fala|alo|bom dia|boa tarde|boa noite)[\\s,.!?-]+)?(?:'+wakes.join('|')+')(?![a-z0-9])');
+  const m = re.exec(n);
+  if(!m) return;
+  const rest = txt.slice(m[0].length).replace(/^[\s,.:;!?\-–]+/, '');
   if(rest.length < 3){ armedUntil = Date.now() + 8000; setMic('Pode falar…', 'arm'); setTimeout(() => { if(Date.now() >= armedUntil && wantListen && !speaking) setMic('Ouvindo','on'); }, 8200); return; }
   ask(rest);
 }
